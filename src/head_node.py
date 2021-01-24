@@ -25,12 +25,13 @@ def reset():
     rb.s21 = tilt
 
 def callback(data):
-    if(data.buttons[2] == 1):
+    if(data.buttons[6] == 1):
         print("Resetting head position")
         reset()
     else:
-        print(data.axes[3], data.axes[4])
-        setservos(data.axes[3] / 20, data.axes[4] / 20)
+        if(data.buttons[2] ==1):
+            # print(data.axes[2], data.axes[3])
+            setservos(data.axes[2] / 20, data.axes[3] / 20)
         
 def setservos(pan_diff, tilt_diff):
     global pan, tilt

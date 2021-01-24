@@ -11,7 +11,7 @@ rb = redboard.RedBoard()
 motor1 = 0
 motor2 = 0
 
-rb.m0_invert = True
+rb.m0_invert = False
 rb.m1_invert = True
 
 # from https://electronics.stackexchange.com/questions/19669/algorithm-for-mixing-2-axis-analog-input-to-control-a-differential-motor-drive
@@ -35,17 +35,18 @@ def steering(x, y):
     left = max(-1, min(left, 1))
     right = max(-1, min(right, 1))
 
-    return left, right
-    return left, right
+    return right, left
 
 def callback(data):
-    # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)    
-    print(data.axes[1], data.axes[0])
+    # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
+    if(data.buttons[2] == 1):
+        # print(data.axes[0], data.axes[1])
+        left, right = steering(data.axes[0], data.axes[1])
+        setmotors(left, right)
+    else:
+        #  print("Motors not enabled.")
+        setmotors(0, 0)
 
-    left, right = steering(data.axes[0], data.axes[1])
-
-    setmotors(left, right)
-    
 def setmotors(m1, m2):
     rb.m0 = m1
     rb.m1 = m2

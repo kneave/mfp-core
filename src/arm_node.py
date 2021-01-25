@@ -9,10 +9,11 @@ import sys
 from sensor_msgs.msg import Joy
 
 expander = redboard.PCA9685(address=0x42)
+expander.frequency= 50
 
 # Initialise the arm position array
-defaultPositions = [0, -0.8, -0.1,  0.9, 0, 0, 0, 0,
-                    0,  0.8,  0.1, -0.9, 0, 0, 0, 0]
+defaultPositions = [0, -0.8, -0.1,  0.8, 0, 0, 0, 0,
+                    0,  0.8,  0.1, -0.8, 0, 0, 0, 0]
 
 positions = [0,0,0,0,0,0,0,0,
              0,0,0,0,0,0,0,0]
@@ -145,4 +146,7 @@ def listener():
 if __name__ == '__main__':
     print("Arm node listening...")
     initialise()
+
+    sleep(5)
+    
     listener()

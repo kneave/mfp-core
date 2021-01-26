@@ -4,6 +4,8 @@ import rospy
 import redboard
 import math
 from time import sleep 
+from datetime import datetime
+from datetime import timedelta
 import sys
 
 from sensor_msgs.msg import Joy
@@ -94,41 +96,41 @@ def MapAxis(input):
     else:
         return input - 0.5
 
+def ReduceAxis(input):
+    return input / 20
+
 def callback(data):
     if(data.buttons[5] == 1):
         DisableServos()
         sys.exit(0)
 
     if(data.buttons[3] == 1):
-        global positions
+        global positions, leftLastClicked, leftPrev, rightLastClicked, rightPrev
         # print(data.axes[0], data.axes[1], data.axes[2], data.axes[3])
 
-        #  if left button pressed, control the elbow instead
-        if(data.buttons[7] == 0):
-            offset = 0
-        else:
-            offset = 2
-        
-        leftRotate = MapAxis(data.axes[4])
-        if(leftRotate != 0):
-            positions[8 + offset] += (leftRotate / 20)
-
-        positions[9 + offset] += (data.axes[1] / 20)
-        positions[10 + offset] += (data.axes[0] / 20)
-
-        #  if right button pressed, control the elbow instead
+        #  if right button pressed, control the elbow/hand instead
         if(data.buttons[8] == 0):
-            offset = 0
-        else:
-            offset = 2
-        
-        rightRotate = MapAxis(data.axes[5])
-        if(rightRotate != 0):
-            positions[0 + offset] -= (rightRotate / 20)
-            # print(rightRotate)
+            positions[1] -= ReduceAxis(data.axes[3])
+            positions[2] += ReduceAxis(data.axes[2])        
 
-        positions[1 + offset] -= (data.axes[3] / 20)
-        positions[2 + offset] -= (data.axes[2] / 20)
+            rightRotate = MapAxis(data.axes[5])
+            if(rightRotate != 0):
+                positions[0] += ReduceAxis(rightRotate)
+        else:
+            if(data.buttons[4] == 0):
+                positions[3] -= ReduceAxis(data.axes[3])
+                positions[2] -= ReduceAxis(data.axes[2])        
+
+                rightRotate = MapAxis(data.axes[5])
+                if(rightRotate != 0):
+                    positions[4] += ReduceAxis(rightRotate)
+            else:
+                positions[5] -= ReduceAxis(data.axes[3])
+                positions[6] -= ReduceAxis(data.axes[2])        
+
+                rightRotate = MapAxis(data.axes[5])
+                if(rightRotate != 0):
+                    positions[7] += ReduceAxis(rightRotate)
         SetServos()
 
 def listener():

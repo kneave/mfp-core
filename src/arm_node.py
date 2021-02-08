@@ -11,21 +11,55 @@ import sys
 from sensor_msgs.msg import Joy
 
 expander = redboard.PCA9685(address=0x42)
-expander.frequency= 50
+expander.frequency = 50
+
+axesDict = {
+    "lx": 0,
+    "ly": 1,
+    "lz": 4,
+    "rx": 2,
+    "ry": 3,
+    "rz": 5,
+    "encoder": 6 }
+
+buttonsDict = {
+    "S1": 0,
+    "S2": 1,
+    "S3": 4,
+    "ToggleDown": 2,
+    "ToggleUp": 3,
+    "Encoder": 5,
+    "Trigger": 6,
+    "LeftStick": 7,
+    "RightStick": 8 }
 
 # Initialise the arm position array
-defaultPositions = [0, -0.8, -0.1,  0.8, 0, 0, 0, 0,
-                    0,  0.8,  0.1, -0.8, 0, 0, 0, 0]
+defaultPositions = [0, -0.8, 0.09,  0.8, -0.18, 0.36, 0.49, -0.92,
+                    0.01,  1.0,  0.1, -1.0, 0.12, 0.12, -0.22, -0.9]
 
-positions = [0,0,0,0,0,0,0,0,
-             0,0,0,0,0,0,0,0]
+positions = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+              0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-minPositions = [-1,-1,-1,-1,-1,-1,-1,-1,
-                -1,-1,-1,-1,-1,-1,-1,-1]
+minPositions = [-0.6, -1.0, -1.0, -0.8, -0.7, -0.1,  0.1, -1.0,
+                -0.3, -1.0, -1.0, -1.0, -1.0, -0.6,  -1.0, -1.0]
 
-maxPositions = [ 1, 1, 1, 1, 1, 1, 1, 1,
-                 1, 1, 1, 1, 1, 1, 1, 1]
+maxPositions = [ 0.3,  1.0,  1.0,  0.8,  1.0,  0.6,  1.0,  1.0,
+                 0.6,  1.0,  1.0,  1.0,  1.0,  0.4,  0.1,  1.0]
 
+# Index of the position to update, value is the amount to change by.
+# Sets the new value if not out of bounds.
+def SetPosition(index, value):
+    global positions
+    newValue = positions[index] + value
+
+    if(newValue > maxPositions[index]):
+        newValue = maxPositions[index]
+    elif(newValue < minPositions[index]):
+        newValue = minPositions[index]
+
+    positions[index] = newValue
+
+# Set the position of each servo
 def SetServos():
     expander.servo0 = positions[0]
     expander.servo1 = positions[1]
@@ -60,7 +94,7 @@ def initialise():
     expander.servo3 = positions[3] = defaultPositions[3]
     expander.servo11 = positions[11] = defaultPositions[11]
 
-    sleep(0.1)
+    sleep(0.25)
 
     #  elbow_rotate(4) to hand(7) to 0
     expander.servo4 = positions[4] = defaultPositions[4]
@@ -73,17 +107,17 @@ def initialise():
     expander.servo14 = positions[14] = defaultPositions[14]
     expander.servo15 = positions[15] = defaultPositions[15]
 
-    sleep(0.1)
+    sleep(0.25)
 
     #  flappy(0) to 0
     expander.servo0 = positions[0] = defaultPositions[0]
     expander.servo8 = positions[8] = defaultPositions[8]
-    sleep(0.1)
+    sleep(0.25)
 
     #  upper_rotate(2) to 0.2
     expander.servo2 = positions[2] = defaultPositions[2]
     expander.servo10 = positions[10] = defaultPositions[10]
-    sleep(0.1)
+    sleep(0.25)
 
     #  shoulder_foreaft(1) to -0.8
     expander.servo1 = positions[1] = defaultPositions[1]
@@ -91,46 +125,89 @@ def initialise():
 
 # Rotation is centred on 0.5 so need to map for that
 def MapAxis(input):
-    if((input >= 0.45) & (input <= 0.55)):
+    if((input >= 0.43) & (input <= 0.57)):
         return 0
     else:
         return input - 0.5
 
 def ReduceAxis(input):
-    return input / 20
+    return input / 15
+
+# Print the values of all positions to 3 decimal points
+def PrintPositions():    
+    print(f'{positions[0]:.2f}, {positions[1]:.2f}, {positions[2]:.2f}, {positions[3]:.2f}, {positions[4]:.2f}, {positions[5]:.2f}, {positions[6]:.2f}, {positions[7]:.2f}, {positions[8]:.2f}, {positions[9]:.2f}, {positions[10]:.2f}, {positions[11]:.2f}, {positions[12]:.2f}, {positions[13]:.2f}, {positions[14]:.2f}, {positions[15]:.2f}')
 
 def callback(data):
-    if(data.buttons[5] == 1):
+    if(data.buttons[buttonsDict["Encoder"]] == 1):
         DisableServos()
         sys.exit(0)
 
-    if(data.buttons[3] == 1):
+    # buttons[3] is the toggle button up on the controller
+    if(data.buttons[buttonsDict["ToggleUp"]] == 1):
         global positions, leftLastClicked, leftPrev, rightLastClicked, rightPrev
         # print(data.axes[0], data.axes[1], data.axes[2], data.axes[3])
 
-        #  if right button pressed, control the elbow/hand instead
-        if(data.buttons[8] == 0):
-            positions[1] -= ReduceAxis(data.axes[3])
-            positions[2] += ReduceAxis(data.axes[2])        
+        if(data.buttons[buttonsDict["Trigger"]] == 1):
+            PrintPositions()
 
-            rightRotate = MapAxis(data.axes[5])
-            if(rightRotate != 0):
-                positions[0] += ReduceAxis(rightRotate)
+        lx = data.axes[axesDict["lx"]]
+        ly = data.axes[axesDict["ly"]]
+        lz = data.axes[axesDict["lz"]]
+
+        rx = data.axes[axesDict["rx"]]
+        ry = data.axes[axesDict["ry"]]
+        rz = data.axes[axesDict["rz"]]
+
+        # if left stick pressed 
+        if(data.buttons[buttonsDict["LeftStick"]] == 0):
+            SetPosition(9, ReduceAxis(ly)) 
+            SetPosition(10, ReduceAxis(lx))        
+
+            leftRotate = MapAxis(lz)
+            if(leftRotate != 0):
+                SetPosition(8, -ReduceAxis(leftRotate))
         else:
-            if(data.buttons[4] == 0):
-                positions[3] -= ReduceAxis(data.axes[3])
-                positions[2] -= ReduceAxis(data.axes[2])        
-
-                rightRotate = MapAxis(data.axes[5])
-                if(rightRotate != 0):
-                    positions[4] += ReduceAxis(rightRotate)
+            # S2 = 0 (arm control), S2 = 1 (hand control)
+            if(data.buttons[buttonsDict["S2"]] == 0):
+                SetPosition(11, ReduceAxis(ly)) 
+                SetPosition(10, -ReduceAxis(lx))
+                
+                leftRotate = MapAxis(lz)
+                if(leftRotate != 0):
+                    SetPosition(12, ReduceAxis(leftRotate))
             else:
-                positions[5] -= ReduceAxis(data.axes[3])
-                positions[6] -= ReduceAxis(data.axes[2])        
+                SetPosition(13, ReduceAxis(ly)) 
+                SetPosition(14, -ReduceAxis(lx))
+                
+                leftRotate = MapAxis(lz)
+                if(leftRotate != 0):
+                    SetPosition(15, -ReduceAxis(leftRotate))
 
-                rightRotate = MapAxis(data.axes[5])
+        #  if right button pressed, control the elbow/hand instead
+        if(data.buttons[buttonsDict["RightStick"]] == 0):
+            SetPosition(1, -ReduceAxis(ry))
+            SetPosition(2, ReduceAxis(rx))
+            
+            rightRotate = MapAxis(rz)
+            if(rightRotate != 0):
+                SetPosition(0, -ReduceAxis(rightRotate))
+        else:
+            # S3 = 0 (arm control), S3 = 1 (hand control)
+            if(data.buttons[buttonsDict["S3"]] == 0):
+                SetPosition(3, -ReduceAxis(ry))
+                SetPosition(2, -ReduceAxis(rx))
+
+                rightRotate = MapAxis(rz)
                 if(rightRotate != 0):
-                    positions[7] += ReduceAxis(rightRotate)
+                    SetPosition(4, ReduceAxis(rightRotate))
+            else:
+                SetPosition(5, -ReduceAxis(ry))
+                SetPosition(6, -ReduceAxis(rx))
+
+                rightRotate = MapAxis(rz)
+                if(rightRotate != 0):
+                    SetPosition(7, ReduceAxis(rightRotate))
+
         SetServos()
 
 def listener():

@@ -11,7 +11,7 @@ i2c = board.I2C()
 ina260 = adafruit_ina260.INA260(i2c)
 
 pub = rospy.Publisher('power', BatteryState, queue_size=10)
-rospy.init_node('power_node', anonymous=True)
+rospy.init_node('robot_power_node', anonymous=True)
 
 if __name__ == '__main__':
     try:
@@ -21,6 +21,7 @@ if __name__ == '__main__':
             msg = BatteryState()
             msg.voltage = ina260.voltage
             msg.current = ina260.current
+            msg.location = "MFP"
             rospy.loginfo(msg)
             pub.publish(msg)
 

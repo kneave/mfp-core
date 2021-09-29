@@ -1,0 +1,5 @@
+<launch>
+  <node name="motor_node" pkg="mfp-core" type="motor_node.py" />
+  <node name="head_node" pkg="mfp-core" type="head_node.py" />
+  <node name="arm_node" pkg="mfp-core" type="arm_node.py" />
+</launch>

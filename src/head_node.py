@@ -9,20 +9,22 @@ from sensor_msgs.msg import Joy
 rb = redboard.RedBoard()
 
 pan = pan_centre = 0
-tilt = tilt_centre = 0
+tilt  = tilt_centre = 0
 
 pan_min = -0.5 + pan_centre
-pan_max = 0.5 + pan_centre
+pan_max =  0.5 + pan_centre
 
 tilt_min = -0.5 + tilt_centre
-tilt_max = 0.5 + tilt_centre
+tilt_max =  0.5 + tilt_centre
 
 def reset():
     global pan, tilt
     pan = pan_centre
     tilt = tilt_centre
-    rb.s7 = pan
-    rb.s8 = tilt
+    
+    rb.s8  = tilt
+    rb.s9  = tilt
+    rb.s10 = pan
 
 def scaleinput(input, invert, scale):
     scaled = input / scale
@@ -40,7 +42,7 @@ def callback(data):
         if(data.buttons[2] ==1):
             # print(data.axes[3], data.axes[4])
             pan = scaleinput(data.axes[3], True, 20)
-            tilt = scaleinput(data.axes[4], True, 50)
+            tilt = scaleinput(data.axes[4], True, 20)
             setservos(pan, tilt)
         
 def setservos(pan_diff, tilt_diff):
@@ -58,9 +60,10 @@ def setservos(pan_diff, tilt_diff):
     elif(tilt < tilt_min):
         tilt = tilt_min
 
-    rb.s7 = pan
-    rb.s8 = tilt
-
+    rb.s8  =  tilt
+    rb.s9  = -tilt
+    rb.s10 =  pan
+    
 def listener():
     # In ROS, nodes are uniquely named. If two nodes with the same
     # name are launched, the previous one is kicked off. The

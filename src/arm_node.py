@@ -10,7 +10,7 @@ import sys
 
 from sensor_msgs.msg import Joy
 
-expander = redboard.PCA9685(address=0x40)
+expander = redboard.PCA9685(address=0x42)
 expander.frequency = 50
 
 axesDict = {
@@ -34,8 +34,8 @@ buttonsDict = {
     "RightStick": 8 }
 
 # Initialise the arm position array
-defaultPositions = [ 0.00,  1.00,  0.00, -0.80,  0.00,  0.20,  0.00,  0.20,
-                     0.00, -1.00,  0.00,  0.80,  0.00, -0.20,  0.00,  0.80]
+defaultPositions = [ 0.00,  -1.00,  0.00,  0.60,  0.00,  0.00,  0.00,  0.00,
+                     0.00,   1.00,  0.00, -0.80,  0.00,  0.00,  0.00,  0.00]
 
 positions = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -88,6 +88,10 @@ def DisableServos():
 
 def initialise():
     global positions
+    # Set the pulse widths for the servos
+    expander.servo1_config = 900, 2100
+    expander.servo9_config = 900, 2100
+
     #  Set the servos to the default positions, do this with delays to prevent overload
     #  Order of initialisation:
     #  elbow (3), 0.4 then to 0.9
@@ -169,19 +173,22 @@ def callback(data):
         else:
             # S2 = 0 (arm control), S2 = 1 (hand control)
             if(data.buttons[buttonsDict["S2"]] == 0):
+                # Moving the left arm
                 SetPosition(3, ReduceAxis(ly)) 
                 SetPosition(2, -ReduceAxis(lx))
                 
                 # leftRotate = MapAxis(lz)
                 # if(leftRotate != 0):
-                SetPosition(4, ReduceAxis(lz))
+                # SetPosition(4, ReduceAxis(lz))
             else:
-                SetPosition(5, ReduceAxis(ly)) 
-                SetPosition(6, -ReduceAxis(lx))
+                # moving the left wrist
+                SetPosition(4, -ReduceAxis(ly)) 
+                SetPosition(5,  ReduceAxis(ly))
                 
                 # leftRotate = MapAxis(lz)
                 # if(leftRotate != 0):
-                SetPosition(7, -ReduceAxis(lz))
+                # Open/Close left hand
+                SetPosition(7, ReduceAxis(lz))
 
         #  if right button pressed, control the elbow/hand instead
         if(data.buttons[buttonsDict["RightStick"]] == 0):
@@ -194,18 +201,21 @@ def callback(data):
         else:
             # S3 = 0 (arm control), S3 = 1 (hand control)
             if(data.buttons[buttonsDict["S3"]] == 0):
+                # moving the right arm
                 SetPosition(11, -ReduceAxis(ry))
                 SetPosition(10, -ReduceAxis(rx))
 
                 # rightRotate = MapAxis(rz)
                 # if(rightRotate != 0):
-                SetPosition(12, ReduceAxis(rz))
+                # SetPosition(12, ReduceAxis(rz))
             else:
-                SetPosition(13, -ReduceAxis(ry))
-                SetPosition(14, -ReduceAxis(rx))
+                # moving the right wrist
+                SetPosition(12, -ReduceAxis(ry))
+                SetPosition(13,  ReduceAxis(ry))
 
                 # rightRotate = MapAxis(rz)
                 # if(rightRotate != 0):
+                # Open/Close right hand
                 SetPosition(15, ReduceAxis(rz))
 
         SetServos()

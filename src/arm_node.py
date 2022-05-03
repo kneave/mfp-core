@@ -13,6 +13,23 @@ from sensor_msgs.msg import Joy
 expander = redboard.PCA9685(address=0x42)
 expander.frequency = 50
 
+servoDict = {
+    "left_flappy": 0,
+    "left_shoulder_tilt": 1,
+    "left_shoulder_rotate": 2,
+    "left_elbow": 3,
+    "left_wrist_left": 4,
+    "left_wrist_right": 5,
+    "left_hand": 7,
+    "right_flappy": 8,
+    "right_shoulder_tilt": 9,
+    "right_shoulder_rotate": 10,
+    "right_elbow": 11,
+    "right_wrist_left": 12,
+    "right_wrist_right": 13,
+    "right_hand": 15
+}
+
 axesDict = {
     "lx": 0,
     "ly": 1,
@@ -148,12 +165,20 @@ def callback(data):
 
     # buttons[3] is the toggle button up on the controller
     if(data.buttons[buttonsDict["ToggleUp"]] == 1):
+        # Arm control engaged
         global positions, leftLastClicked, leftPrev, rightLastClicked, rightPrev
         # print(data.axes[0], data.axes[1], data.axes[2], data.axes[3])
 
         if(data.buttons[buttonsDict["Trigger"]] == 1):
             PrintPositions()
 
+        leftStickButton = data.buttons[buttonsDict["LeftStick"]]
+        leftArmControlMode = data.buttons[buttonsDict["S1"]]
+
+        rightStickButton = data.buttons[buttonsDict["RightStick"]]
+        rightArmControlMode = data.buttons[buttonsDict["S2"]]
+
+        # Get the data from the analogue sticks
         lx = data.axes[axesDict["lx"]]
         ly = data.axes[axesDict["ly"]]
         lz = data.axes[axesDict["lz"]]
@@ -162,61 +187,37 @@ def callback(data):
         ry = data.axes[axesDict["ry"]]
         rz = data.axes[axesDict["rz"]]
 
-        # if left stick pressed 
-        if(data.buttons[buttonsDict["LeftStick"]] == 0):
-            SetPosition(1, ReduceAxis(ly)) 
-            SetPosition(2, ReduceAxis(lx))        
-
-            # leftRotate = MapAxis(lz)
-            # if(leftRotate != 0):
-            SetPosition(0, -ReduceAxis(lz))
-        else:
-            # S2 = 0 (arm control), S2 = 1 (hand control)
-            if(data.buttons[buttonsDict["S2"]] == 0):
-                # Moving the left arm
-                SetPosition(3, ReduceAxis(ly)) 
-                SetPosition(2, -ReduceAxis(lx))
-                
-                # leftRotate = MapAxis(lz)
-                # if(leftRotate != 0):
-                # SetPosition(4, ReduceAxis(lz))
+        # We're in left arm control mode, check if arm/hand control needed
+        if(leftArmControlMode == 0):
+            # control the arm, not the wrist
+            SetPosition(servoDict["left_shoulder_rotate"], ReduceAxis(lx))
+            if(leftStickButton == 0):
+                SetPosition(servoDict["left_shoulder_tilt"], -ReduceAxis(ly)) 
             else:
-                # moving the left wrist
-                SetPosition(4, -ReduceAxis(ly)) 
-                SetPosition(5,  ReduceAxis(ly))
-                
-                # leftRotate = MapAxis(lz)
-                # if(leftRotate != 0):
-                # Open/Close left hand
-                SetPosition(7, ReduceAxis(lz))
+                SetPosition(servoDict["left_elbow"], -ReduceAxis(ly)) 
+            SetPosition(servoDict["left_flappy"], -ReduceAxis(lz))        
+        
+        if(leftArmControlMode == 1):
+            # controlling the wrist/hand
+            SetPosition(servoDict["left_wrist_left"], -ReduceAxis(ly)) 
+            SetPosition(servoDict["left_wrist_right"],  ReduceAxis(ly))            
+            SetPosition(servoDict["left_hand"],  ReduceAxis(lz))
 
-        #  if right button pressed, control the elbow/hand instead
-        if(data.buttons[buttonsDict["RightStick"]] == 0):
-            SetPosition(9, -ReduceAxis(ry))
-            SetPosition(10, ReduceAxis(rx))
-            
-            # rightRotate = MapAxis(rz)
-            # if(rightRotate != 0):
-            SetPosition(8, -ReduceAxis(rz))
-        else:
-            # S3 = 0 (arm control), S3 = 1 (hand control)
-            if(data.buttons[buttonsDict["S3"]] == 0):
-                # moving the right arm
-                SetPosition(11, -ReduceAxis(ry))
-                SetPosition(10, -ReduceAxis(rx))
-
-                # rightRotate = MapAxis(rz)
-                # if(rightRotate != 0):
-                # SetPosition(12, ReduceAxis(rz))
+        # We're in right arm control mode, check if arm/hand control needed
+        if(rightArmControlMode == 0):
+            # control the arm, not the wrist
+            SetPosition(servoDict["right_shoulder_rotate"], ReduceAxis(rx))
+            if(rightStickButton == 0):
+                SetPosition(servoDict["right_shoulder_tilt"], ReduceAxis(ry)) 
             else:
-                # moving the right wrist
-                SetPosition(12, -ReduceAxis(ry))
-                SetPosition(13,  ReduceAxis(ry))
-
-                # rightRotate = MapAxis(rz)
-                # if(rightRotate != 0):
-                # Open/Close right hand
-                SetPosition(15, ReduceAxis(rz))
+                SetPosition(servoDict["right_elbow"], ReduceAxis(ry)) 
+            SetPosition(servoDict["right_flappy"], -ReduceAxis(rz))        
+        
+        if(rightArmControlMode == 1):
+            # controlling the wrist/hand
+            SetPosition(servoDict["right_wrist_left"], -ReduceAxis(ry)) 
+            SetPosition(servoDict["right_wrist_right"],  ReduceAxis(ry))            
+            SetPosition(servoDict["right_hand"],  ReduceAxis(rz))
 
         SetServos()
 

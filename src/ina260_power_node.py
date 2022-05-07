@@ -21,7 +21,7 @@ if __name__ == '__main__':
             msg = BatteryState()
             msg.voltage = ina260.voltage
             msg.current = ina260.current
-            msg.location = "MFP"
+            msg.location = ""
             rospy.loginfo(msg)
             pub.publish(msg)
 

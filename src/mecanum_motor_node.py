@@ -38,7 +38,7 @@ def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
     last_msg_received = rospy.Time.now()
 
-    if(data.buttons[0] == 1):
+    if(data.buttons[2] == 1):
         # print(data.axes[0], data.axes[1])
         front_left, front_right, back_left, back_right = steering(data.axes[1], data.axes[0], data.axes[2])
         print(front_left, front_right, back_left, back_right)

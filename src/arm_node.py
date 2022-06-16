@@ -7,8 +7,14 @@ from time import sleep
 from datetime import datetime
 from datetime import timedelta
 import sys
+import signal
 
 from sensor_msgs.msg import Joy
+
+def handler(signum, frame):
+        print("ctrl-c pressed, exiting")
+        DisableServos()
+        sys.exit()
 
 expander = redboard.PCA9685(address=0x42)
 expander.frequency = 50
@@ -235,6 +241,7 @@ def listener():
 
 if __name__ == '__main__':
     print("Arm node listening...")
+    signal.signal(signal.SIGINT, handler)
     initialise()
 
     sleep(5)

@@ -8,21 +8,20 @@ import time
 from sensor_msgs.msg import Joy
 
 # time in seconds in not recieving a message before stopping
-msg_timeout = rospy.Duration(0.50)
-last_msg_received = rospy.Time.from_sec(time.time())
+# msg_timeout = rospy.Duration(0.5)
+# last_msg_received = rospy.Time.from_sec(time.time())
 
 rb = redboard.RedBoard()
-
 
 motor0 = 0
 motor1 = 0
 motor2 = 0
 motor3 = 0
 
-rb.m0_invert = False
-rb.m1_invert = False
-rb.m0_invert = False
-rb.m1_invert = False
+rb.m0_invert = True         # front left 
+rb.m1_invert = False        # front right
+rb.m2_invert = True         # rear left
+rb.m3_invert = False        # rear right
 
 # from https://electronics.stackexchange.com/questions/19669/algorithm-for-mixing-2-axis-analog-input-to-control-a-differential-motor-drive
 def steering(x, y):
@@ -48,22 +47,22 @@ def steering(x, y):
     return right, left
 
 def callback(data):
-    global last_msg_received
+    # global last_msg_received
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
-    last_msg_received = rospy.Time.now()
+    # last_msg_received = rospy.Time.now()
 
     if(data.buttons[2] == 1):
         # print(data.axes[0], data.axes[1])
-        left, right = steering(data.axes[0], data.axes[1], data.axes[2])
+        left, right = steering(data.axes[0], data.axes[1])
 
         # Buttons are on when down so this makes sense in the physical world
-        if(data.buttons[4] == 1):
+        if(data.buttons[4] == 0):
             # Low speed, halve values
-            left = left * 0.33
-            right = right * 0.33
+            left = left * 0.25
+            right = right * 0.25
         else:
-            left = left * 0.66
-            right = right * 0.66
+            left = left * 0.75
+            right = right * 0.75
 
         setmotors(left, right)
     else:
@@ -73,12 +72,14 @@ def callback(data):
 def setmotors(m1, m2):
     rb.m0 = m1
     rb.m1 = m2
+    rb.m2 = m1
+    rb.m3 = m2
 
-def timeout_check(event):
-    timediff = rospy.Time.now() - last_msg_received
-    if(timediff > msg_timeout):
-        print("Timed out: " + str(rospy.Time.now()) + ", " + str(last_msg_received) + ", " + str(timediff))
-        setmotors(0, 0)
+# def timeout_check(event):
+#     timediff = rospy.Time.now() - last_msg_received
+#     if(timediff > msg_timeout):
+#         print("Timed out: " + str(rospy.Time.now()) + ", " + str(last_msg_received) + ", " + str(timediff))
+#         setmotors(0, 0)
 
 def listener():
     # In ROS, nodes are uniquely named. If two nodes with the same
@@ -90,7 +91,7 @@ def listener():
     rospy.Subscriber('joy', Joy, callback)
 
     # Set up the timer-based timeout check
-    rospy.Timer(msg_timeout, timeout_check)
+    # rospy.Timer(msg_timeout, timeout_check)
 
     rospy.spin()
 

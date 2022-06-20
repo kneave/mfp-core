@@ -2,6 +2,8 @@
 
 import rospy
 import redboard
+from rosredboard.msg import Expander
+
 import math
 from time import sleep 
 from datetime import datetime
@@ -10,6 +12,8 @@ import sys
 import signal
 
 from sensor_msgs.msg import Joy
+
+pub = None # empty global var for the publisher
 
 def handler(signum, frame):
         print("ctrl-c pressed, exiting")
@@ -51,14 +55,17 @@ buttonsDict = {
     "S3": 4,
     "ToggleDown": 2,
     "ToggleUp": 3,
-    "Encoder": 5,
-    "Trigger": 6,
-    "LeftStick": 7,
-    "RightStick": 8 }
+    # "Encoder": 5,
+    "Trigger": 5,
+    "LeftStick": 6,
+    "RightStick": 7 }
+
+# Previous value for the trigger, used for debouncing
+trigger_prev = False
 
 # Initialise the arm position array
 defaultPositions = [ 0.00,  -1.00,  0.00,  0.60,  0.00,  0.00,  0.00,  0.00,
-                     0.00,   1.00,  0.00, -0.80,  0.00,  0.00,  0.00,  0.00]
+                     0.00,   1.00,  0.00, -1.00,  0.00,  0.00,  0.00,  0.00]
 
 positions = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -161,21 +168,47 @@ def ReduceAxis(input):
     return input / 25
 
 # Print the values of all positions to 3 decimal points
-def PrintPositions():    
-    print(f'{positions[0]:.2f}, {positions[1]:.2f}, {positions[2]:.2f}, {positions[3]:.2f}, {positions[4]:.2f}, {positions[5]:.2f}, {positions[6]:.2f}, {positions[7]:.2f}, {positions[8]:.2f}, {positions[9]:.2f}, {positions[10]:.2f}, {positions[11]:.2f}, {positions[12]:.2f}, {positions[13]:.2f}, {positions[14]:.2f}, {positions[15]:.2f}')
+def PrintPositions():
+    global pub
+    
+    msg = Expander()   
+    msg.servo0 = positions[0]
+    msg.servo1 = positions[1]
+    msg.servo2 = positions[2]
+    msg.servo3 = positions[3]
+    msg.servo4 = positions[4]
+    msg.servo5 = positions[5]
+    msg.servo6 = positions[6]
+    msg.servo7 = positions[7]
+    msg.servo8 = positions[8]
+    msg.servo9 = positions[9]
+    msg.servo10 = positions[10]
+    msg.servo11 = positions[11]
+    msg.servo12 = positions[12]
+    msg.servo13 = positions[13]
+    msg.servo14 = positions[14]
+    msg.servo15 = positions[15]
+    
+    pub.publish(msg)
+    rospy.loginfo(msg)
 
 def callback(data):
-    if(data.buttons[buttonsDict["Encoder"]] == 1):
-        DisableServos()
-        sys.exit(0)
-
+    global trigger_prev
+    
     # buttons[3] is the toggle button up on the controller
     if(data.buttons[buttonsDict["ToggleUp"]] == 1):
         # Arm control engaged
         global positions, leftLastClicked, leftPrev, rightLastClicked, rightPrev
         # print(data.axes[0], data.axes[1], data.axes[2], data.axes[3])
 
-        if(data.buttons[buttonsDict["Trigger"]] == 1):
+        # check if the trigger has been pulled
+        trigger_curr = data.buttons[buttonsDict["Trigger"]]
+        trigger_pulled = False
+        if trigger_curr != trigger_prev:
+            trigger_prev = trigger_curr
+            trigger_pulled = trigger_curr
+
+        if(trigger_pulled == 1):
             PrintPositions()
 
         leftStickButton = data.buttons[buttonsDict["LeftStick"]]
@@ -228,6 +261,7 @@ def callback(data):
         SetServos()
 
 def listener():
+    global pub
     # In ROS, nodes are uniquely named. If two nodes with the same
     # name are launched, the previous one is kicked off. The
     # anonymous=True flag means that rospy will choose a unique
@@ -235,6 +269,7 @@ def listener():
     # run simultaneously.
     rospy.init_node('arm_driver', anonymous=True)
     rospy.Subscriber('joy', Joy, callback)
+    pub = rospy.Publisher('expander_servos_states', Expander, queue_size=10)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
@@ -242,8 +277,7 @@ def listener():
 if __name__ == '__main__':
     print("Arm node listening...")
     signal.signal(signal.SIGINT, handler)
-    initialise()
-
-    sleep(5)
-    
+    initialise()    
     listener()
+    PrintPositions()
+    

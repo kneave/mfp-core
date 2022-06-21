@@ -64,7 +64,7 @@ buttonsDict = {
 trigger_prev = False
 
 # Initialise the arm position array
-defaultPositions = [ 0.00,  -1.00,  0.00,  0.60,  0.00,  0.00,  0.00,  0.00,
+defaultPositions = [ 0.17,  -0.57,  0.14,  0.60,  0.02,  0.00,  0.00,  0.00,
                      0.00,   1.00,  0.00, -1.00,  0.00,  0.00,  0.00,  0.00]
 
 positions = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -91,6 +91,7 @@ def SetPosition(index, value):
 
 # Set the position of each servo
 def SetServos():
+    global expander
     expander.servo0 = positions[0]
     expander.servo1 = positions[1]
     expander.servo2 = positions[2]
@@ -117,10 +118,12 @@ def DisableServos():
     SetServos()
 
 def initialise():
-    global positions
+    global positions, expander
     # Set the pulse widths for the servos
     expander.servo1_config = 900, 2100
+    expander.servo7_config = 700, 2400
     expander.servo9_config = 900, 2100
+    expander.servo15_config = 700, 2400
 
     #  Set the servos to the default positions, do this with delays to prevent overload
     #  Order of initialisation:
@@ -169,7 +172,7 @@ def ReduceAxis(input):
 
 # Print the values of all positions to 3 decimal points
 def PrintPositions():
-    global pub
+    global pub, positions
     
     msg = Expander()   
     msg.servo0 = positions[0]
@@ -194,7 +197,7 @@ def PrintPositions():
 
 def callback(data):
     global trigger_prev
-    
+
     # buttons[3] is the toggle button up on the controller
     if(data.buttons[buttonsDict["ToggleUp"]] == 1):
         # Arm control engaged
@@ -230,16 +233,21 @@ def callback(data):
         if(leftArmControlMode == 0):
             # control the arm, not the wrist
             SetPosition(servoDict["left_shoulder_rotate"], ReduceAxis(lx))
+            
             if(leftStickButton == 0):
                 SetPosition(servoDict["left_shoulder_tilt"], -ReduceAxis(ly)) 
             else:
                 SetPosition(servoDict["left_elbow"], -ReduceAxis(ly)) 
+            
             SetPosition(servoDict["left_flappy"], -ReduceAxis(lz))        
         
         if(leftArmControlMode == 1):
             # controlling the wrist/hand
-            SetPosition(servoDict["left_wrist_left"], -ReduceAxis(ly)) 
-            SetPosition(servoDict["left_wrist_right"],  ReduceAxis(ly))            
+            handmovement = ReduceAxis(ly)       
+            handrotate =   ReduceAxis(lx) * 0.5
+
+            SetPosition(servoDict["left_wrist_left"],  -handmovement + handrotate) 
+            SetPosition(servoDict["left_wrist_right"],  handmovement + handrotate)
             SetPosition(servoDict["left_hand"],  ReduceAxis(lz))
 
         # We're in right arm control mode, check if arm/hand control needed
@@ -250,7 +258,7 @@ def callback(data):
                 SetPosition(servoDict["right_shoulder_tilt"], ReduceAxis(ry)) 
             else:
                 SetPosition(servoDict["right_elbow"], ReduceAxis(ry)) 
-            SetPosition(servoDict["right_flappy"], -ReduceAxis(rz))        
+                SetPosition(servoDict["right_flappy"], -ReduceAxis(rz))        
         
         if(rightArmControlMode == 1):
             # controlling the wrist/hand

@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/keegan/catkin_ws/src/mfp-core/build/devel/setup.sh

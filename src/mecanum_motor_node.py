@@ -13,10 +13,10 @@ last_msg_received = rospy.Time.from_sec(time.time())
 
 rb = redboard.RedBoard()
 
-rb.m0_invert = False
-rb.m1_invert = True
-rb.m2_invert = False
-rb.m3_invert = True
+rb.m0_invert = False         # front left 
+rb.m1_invert = True        # front right
+rb.m2_invert = False         # rear left
+rb.m3_invert = True        # rear right
 
 WHEEL_RADIUS = 30
 WHEEL_SEPARATION_WIDTH  = 195 
@@ -25,6 +25,9 @@ WHEEL_GEOMETRY = (WHEEL_SEPARATION_LENGTH + WHEEL_SEPARATION_WIDTH) / 2
 
 # from https://electronics.stackexchange.com/questions/19669/algorithm-for-mixing-2-axis-analog-input-to-control-a-differential-motor-drive
 def steering(x, y, rot):
+    x = x * -1
+    y = y * -1
+    rot = rot * -1
     
     front_left = (x - y - rot) # * WHEEL_GEOMETRY) / WHEEL_RADIUS
     front_right = (x + y + rot) # * WHEEL_GEOMETRY) / WHEEL_RADIUS
@@ -37,29 +40,29 @@ def callback(data):
     global last_msg_received
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
     last_msg_received = rospy.Time.now()
+    # commented out for xbox controller
+    # if(data.buttons[2] == 1):
+    # print(data.axes[0], data.axes[1])
+    front_left, front_right, back_left, back_right = steering(data.axes[1], data.axes[0], data.axes[3])
+    print(front_left, front_right, back_left, back_right)
 
-    if(data.buttons[2] == 1):
-        # print(data.axes[0], data.axes[1])
-        front_left, front_right, back_left, back_right = steering(data.axes[1], data.axes[0], data.axes[2])
-        print(front_left, front_right, back_left, back_right)
+    # Buttons are on when down so this makes sense in the physical world
+    # if(data.buttons[4] == 1):
+    # Low speed, halve values
+    front_left = front_left * 0.25
+    front_right = front_right * 0.25
+    back_left = back_left * 0.25
+    back_right = back_right * 0.25
+    # else:
+    #     front_left = front_left * 0.66
+    #     front_right = front_right * 0.66
+    #     back_left = back_left * 0.66
+    #     back_right = back_right * 0.66
 
-        # Buttons are on when down so this makes sense in the physical world
-        # if(data.buttons[4] == 1):
-        # Low speed, halve values
-        front_left = front_left * 0.33
-        front_right = front_right * 0.33
-        back_left = back_left * 0.33
-        back_right = back_right * 0.33
-        # else:
-        #     front_left = front_left * 0.66
-        #     front_right = front_right * 0.66
-        #     back_left = back_left * 0.66
-        #     back_right = back_right * 0.66
-
-        setmotors(front_left, front_right, back_left, back_right)
-    else:
-        #  print("Motors not enabled.")
-        setmotors(0, 0, 0, 0)
+    setmotors(front_left, front_right, back_left, back_right)
+    # else:
+    #     #  print("Motors not enabled.")
+    #     setmotors(0, 0, 0, 0)
 
 def setmotors(m0, m1, m2, m3):
     rb.m0 = m0

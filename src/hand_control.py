@@ -25,8 +25,8 @@ right_hand_powers_index = 0
 
 # stores the current positions of all the servos
 positions = Expander()
-positions.servo7  = 0
-positions.servo15 = 0
+positions.servo7  = -0.42
+positions.servo15  = 0.32
 
 def Lerp(start, end, ratio):
     if start == end:

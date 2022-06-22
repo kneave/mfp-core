@@ -5,7 +5,7 @@ import redboard
 from rosredboard.msg import Expander
 
 import math
-from time import sleep 
+import time
 from datetime import datetime
 from datetime import timedelta
 import sys
@@ -49,6 +49,29 @@ axesDict = {
     "rz": 5,
     "encoder": 6 }
 
+xboxAxesDict = {
+    "lx": 0,
+    "ly": 1,
+    "lt": 2, # -1:1, zero at start then 1 at rest
+    "rx": 3,
+    "ry": 4,
+    "rt": 5, # -1:1, zero at start then 1 at rest
+    "d-lr": 6,
+    "d-ud": 7 }
+
+xboxButtonsDict = {
+    "A": 0,
+    "B": 1,
+    "X": 2,
+    "Y": 3,
+    "LB": 4,
+    "RB": 5,
+    "View": 6,
+    "Menu": 7,
+    "Meatball": 8,
+    "LS": 9,
+    "RS": 10 }
+
 buttonsDict = {
     "S1": 0,
     "S2": 1,
@@ -64,8 +87,8 @@ buttonsDict = {
 trigger_prev = False
 
 # Initialise the arm position array
-defaultPositions = [ 0.17,  -0.57,  0.14,  0.60,  0.02,  0.00,  0.00,  0.00,
-                     0.00,   1.00,  0.00, -1.00,  0.00,  0.00,  0.00,  0.00]
+defaultPositions = [ 0.09, -0.65, 0.12, 0.89, 0.19, -0.15, 0.00, -0.42, 
+                     0.09, 1.00, 0.00, -0.93, 0.50, -0.19, 0.00, 0.32]
 
 positions = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -111,18 +134,42 @@ def SetServos():
 
 #  Set all positions to None then call SetServo
 def DisableServos():
-    global positions
-    for i in range(16):
-        positions[i] = None
-
-    SetServos()
+    global expander
+    expander.servo0 = None
+    expander.servo8 = None
+    time.sleep(0.1)
+    expander.servo1 = None
+    expander.servo9 = None
+    time.sleep(0.1)
+    expander.servo2 = None
+    expander.servo10 = None
+    time.sleep(0.1)    
+    expander.servo3 = None
+    expander.servo11 = None
+    time.sleep(0.1)
+    expander.servo4 = None
+    expander.servo12 = None
+    time.sleep(0.1)
+    expander.servo5 = None
+    expander.servo13 = None
+    time.sleep(0.1)
+    expander.servo6 = None
+    expander.servo14 = None
+    time.sleep(0.1)
+    expander.servo7 = None
+    expander.servo15 = None
+    
 
 def initialise():
     global positions, expander
     # Set the pulse widths for the servos
     expander.servo1_config = 900, 2100
+    expander.servo4_config = 700, 2400
+    expander.servo5_config = 700, 2400
     expander.servo7_config = 700, 2400
     expander.servo9_config = 900, 2100
+    expander.servo12_config = 700, 2400
+    expander.servo13_config = 700, 2400
     expander.servo15_config = 700, 2400
 
     #  Set the servos to the default positions, do this with delays to prevent overload
@@ -131,7 +178,7 @@ def initialise():
     expander.servo3 = positions[3] = defaultPositions[3]
     expander.servo11 = positions[11] = defaultPositions[11]
 
-    sleep(0.25)
+    time.sleep(0.25)
 
     #  elbow_rotate(4) to hand(7) to 0
     expander.servo4 = positions[4] = defaultPositions[4]
@@ -144,17 +191,17 @@ def initialise():
     expander.servo14 = positions[14] = defaultPositions[14]
     expander.servo15 = positions[15] = defaultPositions[15]
 
-    sleep(0.25)
+    time.sleep(0.25)
 
     #  flappy(0) to 0
     expander.servo0 = positions[0] = defaultPositions[0]
     expander.servo8 = positions[8] = defaultPositions[8]
-    sleep(0.25)
+    time.sleep(0.25)
 
     #  upper_rotate(2) to 0.2
     expander.servo2 = positions[2] = defaultPositions[2]
     expander.servo10 = positions[10] = defaultPositions[10]
-    sleep(0.25)
+    time.sleep(0.25)
 
     #  shoulder_foreaft(1) to -0.8
     expander.servo1 = positions[1] = defaultPositions[1]
@@ -167,8 +214,8 @@ def MapAxis(input):
     else:
         return input - 0.5
 
-def ReduceAxis(input):
-    return input / 25
+def ReduceAxis(input, amount):
+    return input / amount
 
 # Print the values of all positions to 3 decimal points
 def PrintPositions():
@@ -195,17 +242,77 @@ def PrintPositions():
     pub.publish(msg)
     rospy.loginfo(msg)
 
+def TriggerButton(input):
+    if input < 0.75:
+        return 1
+    else:
+        return 0
+
 def callback(data):
     global trigger_prev
 
-    # buttons[3] is the toggle button up on the controller
-    if(data.buttons[buttonsDict["ToggleUp"]] == 1):
+    isXbox = True       #   Are we using an xbox controller?
+
+    if(data.buttons[buttonsDict["ToggleUp"]] == 1) or (isXbox == True):
         # Arm control engaged
         global positions, leftLastClicked, leftPrev, rightLastClicked, rightPrev
         # print(data.axes[0], data.axes[1], data.axes[2], data.axes[3])
 
+        if isXbox == True:
+            lx = -data.axes[xboxAxesDict["lx"]]
+            ly = -data.axes[xboxAxesDict["ly"]]
+
+            rx =  data.axes[xboxAxesDict["rx"]]
+            ry =  data.axes[xboxAxesDict["ry"]]
+
+            reduction = 50
+
+            leftAxisX = ReduceAxis(lx, reduction)
+            leftAxisY = ReduceAxis(ly, reduction)
+        
+            rightAxisX = ReduceAxis(rx, reduction)
+            rightAxisY = ReduceAxis(ry, reduction)
+        
+            trigger_curr = data.buttons[xboxButtonsDict["Meatball"]]
+
+            leftStickButton = data.buttons[xboxButtonsDict["LS"]]
+            leftControlArm =  data.buttons[xboxButtonsDict["LB"]]
+            leftControlHand = TriggerButton(data.axes[xboxAxesDict["lt"]])
+
+            rightStickButton = data.buttons[xboxButtonsDict["RS"]]
+            rightControlArm =  data.buttons[xboxButtonsDict["RB"]]
+            rightControlHand = TriggerButton(data.axes[xboxAxesDict["rt"]])
+
+        else:
+            lx = data.axes[axesDict["lx"]]
+            ly = data.axes[axesDict["ly"]]
+            lz = data.axes[axesDict["lz"]]
+
+            rx = data.axes[axesDict["rx"]]
+            ry = data.axes[axesDict["ry"]]
+            rz = data.axes[axesDict["rz"]]
+
+            reduction = 25
+
+            leftAxisX = ReduceAxis(lx, reduction)
+            leftAxisY = ReduceAxis(ly, reduction)
+            leftAxisZ = ReduceAxis(lz, reduction)
+
+            rightAxisX = ReduceAxis(rx, reduction)
+            rightAxisY = ReduceAxis(ry, reduction)
+            rightAxisZ = ReduceAxis(rz, reduction)
+
+            trigger_curr = data.buttons[buttonsDict["Trigger"]]
+
+            leftStickButton = data.buttons[buttonsDict["LeftStick"]]
+            leftControlArm = data.buttons[buttonsDict["ToggleUp"]]
+            leftControlHand = data.buttons[buttonsDict["S1"]]
+
+            rightStickButton = data.buttons[buttonsDict["RightStick"]]
+            rightControlArm = data.buttons[buttonsDict["ToggleUp"]]
+            rightControlHand = data.buttons[buttonsDict["S2"]]
+
         # check if the trigger has been pulled
-        trigger_curr = data.buttons[buttonsDict["Trigger"]]
         trigger_pulled = False
         if trigger_curr != trigger_prev:
             trigger_prev = trigger_curr
@@ -214,57 +321,64 @@ def callback(data):
         if(trigger_pulled == 1):
             PrintPositions()
 
-        leftStickButton = data.buttons[buttonsDict["LeftStick"]]
-        leftArmControlMode = data.buttons[buttonsDict["S1"]]
-
-        rightStickButton = data.buttons[buttonsDict["RightStick"]]
-        rightArmControlMode = data.buttons[buttonsDict["S2"]]
-
-        # Get the data from the analogue sticks
-        lx = data.axes[axesDict["lx"]]
-        ly = data.axes[axesDict["ly"]]
-        lz = data.axes[axesDict["lz"]]
-
-        rx = data.axes[axesDict["rx"]]
-        ry = data.axes[axesDict["ry"]]
-        rz = data.axes[axesDict["rz"]]
-
         # We're in left arm control mode, check if arm/hand control needed
-        if(leftArmControlMode == 0):
-            # control the arm, not the wrist
-            SetPosition(servoDict["left_shoulder_rotate"], ReduceAxis(lx))
+        if(leftControlArm == 1):
+            if(leftControlHand == 0):
+                # control the arm, not the wrist
+                SetPosition(servoDict["left_shoulder_rotate"], leftAxisX)
+                                
+                if isXbox == True:
+                    SetPosition(servoDict["left_shoulder_tilt"], leftAxisY) 
+                    SetPosition(servoDict["left_elbow"],  rightAxisY) 
+                    SetPosition(servoDict["left_flappy"], rightAxisX)        
+                else:
+                    if(leftStickButton == 0):
+                        SetPosition(servoDict["left_shoulder_tilt"], -leftAxisY) 
+                    else:
+                        SetPosition(servoDict["left_elbow"], -leftAxisX) 
+                    SetPosition(servoDict["left_flappy"], -leftAxisZ)        
             
-            if(leftStickButton == 0):
-                SetPosition(servoDict["left_shoulder_tilt"], -ReduceAxis(ly)) 
-            else:
-                SetPosition(servoDict["left_elbow"], -ReduceAxis(ly)) 
-            
-            SetPosition(servoDict["left_flappy"], -ReduceAxis(lz))        
-        
-        if(leftArmControlMode == 1):
-            # controlling the wrist/hand
-            handmovement = ReduceAxis(ly)       
-            handrotate =   ReduceAxis(lx) * 0.5
+            if(leftControlHand == 1):
+                # controlling the wrist/hand      
+                handrotate = leftAxisX * 0.5
 
-            SetPosition(servoDict["left_wrist_left"],  -handmovement + handrotate) 
-            SetPosition(servoDict["left_wrist_right"],  handmovement + handrotate)
-            SetPosition(servoDict["left_hand"],  ReduceAxis(lz))
+                SetPosition(servoDict["left_wrist_left"],  -leftAxisY + handrotate) 
+                SetPosition(servoDict["left_wrist_right"],  leftAxisY + handrotate)
+
+                if(isXbox == True):
+                    SetPosition(servoDict["left_hand"],  rightAxisX)
+                else:
+                    SetPosition(servoDict["left_hand"],  leftAxisZ)
 
         # We're in right arm control mode, check if arm/hand control needed
-        if(rightArmControlMode == 0):
-            # control the arm, not the wrist
-            SetPosition(servoDict["right_shoulder_rotate"], ReduceAxis(rx))
-            if(rightStickButton == 0):
-                SetPosition(servoDict["right_shoulder_tilt"], ReduceAxis(ry)) 
-            else:
-                SetPosition(servoDict["right_elbow"], ReduceAxis(ry)) 
-                SetPosition(servoDict["right_flappy"], -ReduceAxis(rz))        
-        
-        if(rightArmControlMode == 1):
-            # controlling the wrist/hand
-            SetPosition(servoDict["right_wrist_left"], -ReduceAxis(ry)) 
-            SetPosition(servoDict["right_wrist_right"],  ReduceAxis(ry))            
-            SetPosition(servoDict["right_hand"],  ReduceAxis(rz))
+        if(rightControlArm == 1):
+            if(rightControlHand == 0):                           
+                if isXbox == True:
+                    SetPosition(servoDict["right_shoulder_rotate"], leftAxisX)
+                    SetPosition(servoDict["right_shoulder_tilt"], leftAxisY)
+                    SetPosition(servoDict["right_flappy"], rightAxisX)
+                    SetPosition(servoDict["right_elbow"],  rightAxisY)        
+                else:
+                    SetPosition(servoDict["right_shoulder_rotate"], rightAxisX)
+                    if(rightStickButton == 0):
+                        SetPosition(servoDict["right_shoulder_tilt"], rightAxisY) 
+                    else:
+                        SetPosition(servoDict["right_elbow"],  rightAxisY) 
+                        SetPosition(servoDict["right_flappy"], -rightAxisZ)
+
+            if(rightControlHand == 1):
+                # controlling the wrist/hand
+                
+                if(isXbox == True):
+                    handrotate = leftAxisX * 0.5
+                    SetPosition(servoDict["right_wrist_left"],  -leftAxisY + handrotate) 
+                    SetPosition(servoDict["right_wrist_right"],  leftAxisY + handrotate)            
+                    SetPosition(servoDict["right_hand"],  rightAxisX)
+                else:
+                    handrotate = rightAxisX * 0.5
+                    SetPosition(servoDict["right_wrist_left"], -rightAxisY + handrotate) 
+                    SetPosition(servoDict["right_wrist_right"], rightAxisY + handrotate)            
+                    SetPosition(servoDict["right_hand"],  rightAxisZ)
 
         SetServos()
 

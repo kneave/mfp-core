@@ -54,6 +54,9 @@ def callback(data):
     isXbox = True
 
     if isXbox == True:
+        # If buffer buttons presed, arms being controlled so return
+        if (data.buttons[4] == 1) or (data.buttons[5] == 1):
+            return
         control_movement = True
     else:
         control_movement = data.buttons[2] == 1

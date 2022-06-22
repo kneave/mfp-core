@@ -13,10 +13,10 @@ last_msg_received = rospy.Time.from_sec(time.time())
 
 rb = redboard.RedBoard()
 
-rb.m0_invert = False
-rb.m1_invert = True
-rb.m2_invert = False
-rb.m3_invert = True
+rb.m0_invert = True         # front left 
+rb.m1_invert = False        # front right
+rb.m2_invert = True         # rear left
+rb.m3_invert = False        # rear right
 
 WHEEL_RADIUS = 30
 WHEEL_SEPARATION_WIDTH  = 195 
@@ -38,18 +38,27 @@ def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
     last_msg_received = rospy.Time.now()
 
-    if(data.buttons[2] == 1):
+    isXbox = True
+
+    if isXbox == True:
+        control_movement = True
+        x, y, z = data.axes[1], data.axes[0], data.axes[6] * 0.75
+    else:
+        control_movement = data.buttons[2] == 1
+        data.axes[0], data.axes[1], data.axes[2]
+
+    if(control_movement == True):
         # print(data.axes[0], data.axes[1])
-        front_left, front_right, back_left, back_right = steering(data.axes[1], data.axes[0], data.axes[2])
-        print(front_left, front_right, back_left, back_right)
+        front_left, front_right, back_left, back_right = steering(x, y, z)
+        # print(front_left, front_right, back_left, back_right)
 
         # Buttons are on when down so this makes sense in the physical world
         # if(data.buttons[4] == 1):
         # Low speed, halve values
-        front_left = front_left * 0.33
-        front_right = front_right * 0.33
-        back_left = back_left * 0.33
-        back_right = back_right * 0.33
+        front_left = front_left * 0.25
+        front_right = front_right * 0.25
+        back_left = back_left * 0.25
+        back_right = back_right * 0.25
         # else:
         #     front_left = front_left * 0.66
         #     front_right = front_right * 0.66

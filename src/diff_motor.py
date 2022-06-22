@@ -51,7 +51,14 @@ def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
     # last_msg_received = rospy.Time.now()
 
-    if(data.buttons[2] == 1):
+    isXbox = True
+
+    if isXbox == True:
+        control_movement = True
+    else:
+        control_movement = data.buttons[2] == 1
+
+    if control_movement == True:
         # print(data.axes[0], data.axes[1])
         left, right = steering(data.axes[0], data.axes[1])
 

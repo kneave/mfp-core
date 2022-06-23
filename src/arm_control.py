@@ -13,17 +13,18 @@ import time
 #  Get the expander address
 expander_address = rospy.get_param('/expander_address', 66)
 rospy.loginfo("Expander address: " + str(expander_address))
+pospub = None
 
-expander = redboard.PCA9685(address=expander_address)
-expander.frequency = 50
+rbex = redboard.PCA9685(address=expander_address)
+rbex.frequency = 50
 
 # Set the pulse widths for the servos
-expander.servo1_config = 900, 2100
-expander.servo4_config = 700, 2400
-expander.servo5_config = 700, 2400
-expander.servo9_config = 900, 2100
-expander.servo12_config = 700, 2400
-expander.servo13_config = 700, 2400
+rbex.servo1_config = 900, 2100
+rbex.servo4_config = 700, 2400
+rbex.servo5_config = 700, 2400
+rbex.servo9_config = 900, 2100
+rbex.servo12_config = 700, 2400
+rbex.servo13_config = 700, 2400
 
 # Previous value for the trigger, used for debouncing
 trigger_prev = False
@@ -75,18 +76,18 @@ buttonsDict = {
 
 # stores the current positions of all the servos
 positions = Expander()
-positions.servo0  = 0.09
+positions.servo0  =  0.09
 positions.servo1  = -0.65
-positions.servo2  = 0.12
-positions.servo3  = 0.89
-positions.servo4  = 0.19
+positions.servo2  =  0.12
+positions.servo3  =  0.89
+positions.servo4  =  0.19
 positions.servo5  = -0.15
-positions.servo8  = 0.09
-positions.servo9  = 1.00
-positions.servo10  = 0.00
+positions.servo8  =  0.09
+positions.servo9  =  1.00
+positions.servo10 =  0.00
 positions.servo11 = -0.93
-positions.servo12 = 0.50
-positions.servo13  = -0.19 
+positions.servo12 =  0.50
+positions.servo13 = -0.19 
 
 # store the default states
 rest_positions = positions 
@@ -95,79 +96,81 @@ def Lerp(start, end, ratio):
     if start == end:
         return start
 
-    total_diff = abs(start) + abs(end)
+    return (start + (end - start) * ratio)
 
-    if start < end:
-        return start + (total_diff * ratio)
-    else:
-        return start - (total_diff * ratio)
+    # total_diff = abs(start) + abs(end)
+
+    # if start < end:
+    #     return start + (total_diff * ratio)
+    # else:
+    #     return start - (total_diff * ratio)
 
 def InitServos():
-    global positions
-    expander.servo0 = positions.servo0
-    expander.servo8 = positions.servo8
+    global positions, rbex
+    rbex.servo0 = positions.servo0
+    rbex.servo8 = positions.servo8
     time.sleep(0.1)
-    expander.servo1 = positions.servo1
-    expander.servo9 = positions.servo9
+    rbex.servo1 = positions.servo1
+    rbex.servo9 = positions.servo9
     time.sleep(0.1)
-    expander.servo2 = positions.servo2
-    expander.servo10 = positions.servo10
+    rbex.servo2 = positions.servo2
+    rbex.servo10 = positions.servo10
     time.sleep(0.1)
-    expander.servo3 = positions.servo3
-    expander.servo11 = positions.servo11
+    rbex.servo3 = positions.servo3
+    rbex.servo11 = positions.servo11
     time.sleep(0.1)
-    expander.servo4 = positions.servo4
-    expander.servo12 = positions.servo12
+    rbex.servo4 = positions.servo4
+    rbex.servo12 = positions.servo12
     time.sleep(0.1)
-    expander.servo5 = positions.servo5
-    expander.servo13 = positions.servo13
+    rbex.servo5 = positions.servo5
+    rbex.servo13 = positions.servo13
 
 
 # Set the position of each servo
 def SetServos():
-    global expander
-    expander.servo0 = positions.servo0
-    expander.servo1 = positions.servo1
-    expander.servo2 = positions.servo2
-    expander.servo3 = positions.servo3
-    expander.servo4 = positions.servo4
-    expander.servo5 = positions.servo5
-    expander.servo8 = positions.servo8
-    expander.servo9 = positions.servo9
-    expander.servo10 = positions.servo10
-    expander.servo11 = positions.servo11
-    expander.servo12 = positions.servo12
-    expander.servo13 = positions.servo13
+    global rbex, positions
+    rbex.servo0 = positions.servo0
+    rbex.servo1 = positions.servo1
+    rbex.servo2 = positions.servo2
+    rbex.servo3 = positions.servo3
+    rbex.servo4 = positions.servo4
+    rbex.servo5 = positions.servo5
+    rbex.servo8 = positions.servo8
+    rbex.servo9 = positions.servo9
+    rbex.servo10 = positions.servo10
+    rbex.servo11 = positions.servo11
+    rbex.servo12 = positions.servo12
+    rbex.servo13 = positions.servo13
 
 def DisableServos():
     global expander
-    expander.servo0 = None
+    rbex.servo0 = None
     time.sleep(0.1)
-    expander.servo1 = None
+    rbex.servo1 = None
     time.sleep(0.1)
-    expander.servo2 = None
+    rbex.servo2 = None
     time.sleep(0.1)
-    expander.servo3 = None
+    rbex.servo3 = None
     time.sleep(0.1)
-    expander.servo4 = None
+    rbex.servo4 = None
     time.sleep(0.1)
-    expander.servo5 = None
+    rbex.servo5 = None
     time.sleep(0.1)
-    expander.servo6 = None
+    rbex.servo6 = None
     time.sleep(0.1)
-    expander.servo8 = None
+    rbex.servo8 = None
     time.sleep(0.1)
-    expander.servo9 = None
+    rbex.servo9 = None
     time.sleep(0.1)
-    expander.servo10 = None
+    rbex.servo10 = None
     time.sleep(0.1)
-    expander.servo11 = None
+    rbex.servo11 = None
     time.sleep(0.1)
-    expander.servo12 = None
+    rbex.servo12 = None
     time.sleep(0.1)
-    expander.servo13 = None
+    rbex.servo13 = None
     time.sleep(0.1)
-    expander.servo14 = None
+    rbex.servo14 = None
 
 def handler(signum, frame):
     print("ctrl-c pressed, exiting")
@@ -177,6 +180,7 @@ def handler(signum, frame):
 def joy_callback(data):
     global trigger_prev, positions, lerpingInProgress
     if lerpingInProgress == True:
+        # print("lerping in progress")
         return
 
     isXbox = True       #   Are we using an xbox controller?
@@ -326,10 +330,42 @@ def MapAxis(input):
     else:
         return input - 0.5
 
+# Print the values of all positions to 3 decimal points
+def PrintPositions():
+    global pospub, positions
+    
+    msg = Expander()   
+    msg.servo0 = positions.servo0
+    msg.servo1 = positions.servo1
+    msg.servo2 = positions.servo2
+    msg.servo3 = positions.servo3
+    msg.servo4 = positions.servo4
+    msg.servo5 = positions.servo5
+    msg.servo7 = positions.servo7
+    msg.servo8 = positions.servo8
+    msg.servo9 = positions.servo9
+    msg.servo10 = positions.servo10
+    msg.servo11 = positions.servo11
+    msg.servo12 = positions.servo12
+    msg.servo13 = positions.servo13
+    msg.servo15 = positions.servo15
+    
+    pospub.publish(msg)
+    # rospy.loginfo(msg)
+
 # target positions, time in seconds
 def LerpPositions(msg, time_to_move):
-    global positions, expander, lerpingInProgress
+    global positions, rbex, lerpingInProgress
 
+    # print("Lerping from -> to")
+    # print(f'{positions.servo0} -> {msg.servo0}')
+    # print(f'{positions.servo1} -> {msg.servo1}')
+    # print(f'{positions.servo2} -> {msg.servo2}')
+    # print(f'{positions.servo3} -> {msg.servo3}')
+    # print(f'{positions.servo4} -> {msg.servo4}')
+    # print(f'{positions.servo5} -> {msg.servo5}')
+    # print(f'{positions.servo7} -> {msg.servo7}')
+    
     # create a loop
     #   each iteration, move each position a bit closer
     # go with 25hz as a rate
@@ -343,58 +379,59 @@ def LerpPositions(msg, time_to_move):
     for x in range(iterations_needed + 1):
         ratio = x / iterations_needed
 
-        if msg.servo0 != 999.0:
-            expander.servo0 = Lerp(positions.servo0, msg.servo0, ratio)
-        if msg.servo1 != 999.0:
-            expander.servo1 = Lerp(positions.servo1, msg.servo1, ratio)
-        if msg.servo2 != 999.0:
-            expander.servo2 = Lerp(positions.servo2, msg.servo2, ratio)
-        if msg.servo3 != 999.0:
-            expander.servo3 = Lerp(positions.servo3, msg.servo3, ratio)
-        if msg.servo4 != 999.0:
-            expander.servo4 = Lerp(positions.servo4, msg.servo4, ratio)
-        if msg.servo5 != 999.0:
-            expander.servo5 = Lerp(positions.servo5, msg.servo5, ratio)
-        if msg.servo8 != 999.0:
-            expander.servo8 = Lerp(positions.servo8, msg.servo8, ratio)
-        if msg.servo9 != 999.0:
-            expander.servo9 = Lerp(positions.servo9, msg.servo9, ratio)
-        if msg.servo10 != 999.0:
-            expander.servo10 = Lerp(positions.servo10, msg.servo10, ratio)
-        if msg.servo11 != 999.0:
-            expander.servo11 = Lerp(positions.servo11, msg.servo11, ratio)
-        if msg.servo12 != 999.0:
-            expander.servo12 = Lerp(positions.servo12, msg.servo12, ratio)
-        if msg.servo13 != 999.0:
-            expander.servo13 = Lerp(positions.servo13, msg.servo13, ratio)
+        if not msg.servo0 > 1.0:
+            rbex.servo0 = Lerp(positions.servo0, msg.servo0, ratio)
+        if not msg.servo1 > 1.0:
+            rbex.servo1 = Lerp(positions.servo1, msg.servo1, ratio)
+        if not msg.servo2 > 1.0:
+            rbex.servo2 = Lerp(positions.servo2, msg.servo2, ratio)
+        if not msg.servo3 > 1.0:
+            rbex.servo3 = Lerp(positions.servo3, msg.servo3, ratio)
+        if not msg.servo4 > 1.0:
+            rbex.servo4 = Lerp(positions.servo4, msg.servo4, ratio)
+        if not msg.servo5 > 1.0:
+            rbex.servo5 = Lerp(positions.servo5, msg.servo5, ratio)
+        if not msg.servo8 > 1.0:
+            rbex.servo8 = Lerp(positions.servo8, msg.servo8, ratio)
+        if not msg.servo9 > 1.0:
+            rbex.servo9 = Lerp(positions.servo9, msg.servo9, ratio)
+        if not msg.servo10 > 1.0:
+            rbex.servo10 = Lerp(positions.servo10, msg.servo10, ratio)
+        if not msg.servo11 > 1.0:
+            rbex.servo11 = Lerp(positions.servo11, msg.servo11, ratio)
+        if not msg.servo12 > 1.0:
+            rbex.servo12 = Lerp(positions.servo12, msg.servo12, ratio)
+        if not msg.servo13 > 1.0:
+            rbex.servo13 = Lerp(positions.servo13, msg.servo13, ratio)
 
         time.sleep(delayPerLoop)
 
     # set positions array to current values
-    positions.servo0 = expander.servo0
-    positions.servo1 = expander.servo1
-    positions.servo2 = expander.servo2
-    positions.servo3 = expander.servo3
-    positions.servo4 = expander.servo4
-    positions.servo5 = expander.servo5
-    positions.servo8 = expander.servo8
-    positions.servo9 = expander.servo9
-    positions.servo10 = expander.servo10
-    positions.servo11 = expander.servo11
-    positions.servo12 = expander.servo12
-    positions.servo13 = expander.servo13
+    positions.servo0 = rbex.servo0
+    positions.servo1 = rbex.servo1
+    positions.servo2 = rbex.servo2
+    positions.servo3 = rbex.servo3
+    positions.servo4 = rbex.servo4
+    positions.servo5 = rbex.servo5
+    positions.servo8 = rbex.servo8
+    positions.servo9 = rbex.servo9
+    positions.servo10 = rbex.servo10
+    positions.servo11 = rbex.servo11
+    positions.servo12 = rbex.servo12
+    positions.servo13 = rbex.servo13
 
     lerpingInProgress = False
 
 def expander_callback(msg):
-    rospy.loginfo(msg)
+    # rospy.loginfo(msg)
     LerpPositions(msg, 1)
 
 def listener():
+    global pospub
     rospy.init_node('redboard_servo_expander_driver', anonymous=True)
     rospy.Subscriber('/redboard/expander', Expander, expander_callback)
     rospy.Subscriber('joy', Joy, joy_callback)
-    pub = rospy.Publisher('expander_servos_states', Expander, queue_size=10)
+    pospub = rospy.Publisher('expander_servos_states', Expander, queue_size=10)
 
     rospy.spin()
 

@@ -80,8 +80,9 @@ positions.servo0  =  0.09
 positions.servo1  = -0.65
 positions.servo2  =  0.12
 positions.servo3  =  0.89
-positions.servo4  =  0.19
-positions.servo5  = -0.15
+positions.servo4  = -0.29
+positions.servo5  = -0.21
+
 positions.servo8  =  0.09
 positions.servo9  =  1.00
 positions.servo10 =  0.00
@@ -97,13 +98,6 @@ def Lerp(start, end, ratio):
         return start
 
     return (start + (end - start) * ratio)
-
-    # total_diff = abs(start) + abs(end)
-
-    # if start < end:
-    #     return start + (total_diff * ratio)
-    # else:
-    #     return start - (total_diff * ratio)
 
 def InitServos():
     global positions, rbex
@@ -129,12 +123,16 @@ def InitServos():
 # Set the position of each servo
 def SetServos():
     global rbex, positions
+
+    # left arm
     rbex.servo0 = positions.servo0
     rbex.servo1 = positions.servo1
     rbex.servo2 = positions.servo2
     rbex.servo3 = positions.servo3
     rbex.servo4 = positions.servo4
     rbex.servo5 = positions.servo5
+    
+    # right arm
     rbex.servo8 = positions.servo8
     rbex.servo9 = positions.servo9
     rbex.servo10 = positions.servo10
@@ -257,12 +255,13 @@ def joy_callback(data):
         if(leftControlArm == 1):
             if(leftControlHand == 0):
                 # control the arm, not the wrist
-                positions.servo2 += leftAxisX
                                 
                 if isXbox == True:
-                    positions.servo1 += leftAxisY 
-                    positions.servo3 += rightAxisY 
-                    positions.servo0 += rightAxisX        
+                    print(leftAxisY)
+                    positions.servo2 += leftAxisX
+                    positions.servo1 += leftAxisY
+                    positions.servo0 += rightAxisX
+                    positions.servo3 += rightAxisY   
                 else:
                     if(leftStickButton == 0):
                         positions.servo1 -= leftAxisY 
@@ -287,8 +286,8 @@ def joy_callback(data):
             if(rightControlHand == 0):                           
                 if isXbox == True:
                     positions.servo10 += leftAxisX
-                    positions.servo9 += leftAxisY
-                    positions.servo8 += rightAxisX
+                    positions.servo9  += leftAxisY
+                    positions.servo8  += rightAxisX
                     positions.servo11 += rightAxisY        
                 else:
                     positions.servo10 += rightAxisX
@@ -374,7 +373,7 @@ def LerpPositions(msg, time_to_move):
     iterations_needed = time_to_move * rate
 
     lerpingInProgress = True
-
+    
     # how many iterations do we need?
     for x in range(iterations_needed + 1):
         ratio = x / iterations_needed

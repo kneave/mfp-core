@@ -53,7 +53,7 @@ def callback(data):
 
     else:
         control_movement = data.buttons[2] == 1
-        data.axes[0], data.axes[1], data.axes[2]
+        x, y, z = -data.axes[1], data.axes[0], data.axes[2]
 
     if(control_movement == True):
         # print(data.axes[0], data.axes[1])
@@ -61,17 +61,17 @@ def callback(data):
         # print(front_left, front_right, back_left, back_right)
 
         # Buttons are on when down so this makes sense in the physical world
-        # if(data.buttons[4] == 1):
-        # Low speed, halve values
-        front_left = front_left * 0.2
-        front_right = front_right * 0.2
-        back_left = back_left * 0.2
-        back_right = back_right * 0.2
-        # else:
-        #     front_left = front_left * 0.66
-        #     front_right = front_right * 0.66
-        #     back_left = back_left * 0.66
-        #     back_right = back_right * 0.66
+        if(data.buttons[4] == 1):
+            # Low speed, halve values
+            front_left = front_left * 0.33
+            front_right = front_right * 0.33
+            back_left = back_left * 0.33
+            back_right = back_right * 0.33
+        else:
+            front_left = front_left * 0.66
+            front_right = front_right * 0.66
+            back_left = back_left * 0.66
+            back_right = back_right * 0.66
 
         setmotors(front_left, front_right, back_left, back_right)
     else:

@@ -51,18 +51,32 @@ def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
     # last_msg_received = rospy.Time.now()
 
-    if(data.buttons[2] == 1):
+    isXbox = False
+
+    if isXbox == True:
+        # If buffer buttons presed, arms being controlled so return
+        if (data.buttons[4] == 1) or (data.buttons[5] == 1):
+            return
+        control_movement = True
+        high_speed = data.buttons[2] == 0 # X
+        x, y = -data.axes[0], data.axes[1]
+    else:
+        control_movement = data.buttons[2] == 1
+        high_speed = data.buttons[4] == 0
+        x, y = data.axes[0], data.axes[1]
+
+    if control_movement == True:
         # print(data.axes[0], data.axes[1])
-        left, right = steering(data.axes[0], data.axes[1])
+        left, right = steering(x, y)
 
         # Buttons are on when down so this makes sense in the physical world
-        if(data.buttons[4] == 0):
+        if(high_speed == True):
             # Low speed, halve values
             left = left * 0.25
             right = right * 0.25
         else:
-            left = left * 0.75
-            right = right * 0.75
+            left = left * 0.5
+            right = right * 0.5
 
         setmotors(left, right)
     else:

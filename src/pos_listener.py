@@ -5,7 +5,8 @@ import math
 from rosredboard.msg import Expander
 
 def callback(msg):
-    print(f'{msg.servo0:.2f}, {msg.servo1:.2f}, {msg.servo2:.2f}, {msg.servo3:.2f}, {msg.servo4:.2f}, {msg.servo5:.2f}, {msg.servo6:.2f}, {msg.servo7:.2f}, {msg.servo8:.2f}, {msg.servo9:.2f}, {msg.servo10:.2f}, {msg.servo11:.2f}, {msg.servo12:.2f}, {msg.servo13:.2f}, {msg.servo14:.2f}, {msg.servo15:.2f}')
+    print(f'Left:  {msg.servo0:.2f}, {msg.servo1:.2f}, {msg.servo2:.2f}, {msg.servo3:.2f}, {msg.servo4:.2f}, {msg.servo5:.2f}, {msg.servo7:.2f}')
+    print(f'Right: {msg.servo8:.2f}, {msg.servo9:.2f}, {msg.servo10:.2f}, {msg.servo11:.2f}, {msg.servo12:.2f}, {msg.servo13:.2f}, {msg.servo15:.2f}')
 
     
 def listener():

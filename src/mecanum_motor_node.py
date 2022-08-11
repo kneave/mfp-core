@@ -13,10 +13,10 @@ last_msg_received = rospy.Time.from_sec(time.time())
 
 rb = redboard.RedBoard()
 
-rb.m0_invert = False         # front left 
-rb.m1_invert = True        # front right
-rb.m2_invert = False         # rear left
-rb.m3_invert = True        # rear right
+rb.m0_invert = True         # front left 
+rb.m1_invert = False        # front right
+rb.m2_invert = True         # rear left
+rb.m3_invert = False        # rear right
 
 WHEEL_RADIUS = 30
 WHEEL_SEPARATION_WIDTH  = 195 
@@ -40,29 +40,43 @@ def callback(data):
     global last_msg_received
     # rospy.loginfo(rospy.get_caller_id() + 'RCVD: %s', data)
     last_msg_received = rospy.Time.now()
-    # commented out for xbox controller
-    # if(data.buttons[2] == 1):
-    # print(data.axes[0], data.axes[1])
-    front_left, front_right, back_left, back_right = steering(data.axes[1], data.axes[0], data.axes[3])
-    print(front_left, front_right, back_left, back_right)
 
-    # Buttons are on when down so this makes sense in the physical world
-    # if(data.buttons[4] == 1):
-    # Low speed, halve values
-    front_left = front_left * 0.25
-    front_right = front_right * 0.25
-    back_left = back_left * 0.25
-    back_right = back_right * 0.25
-    # else:
-    #     front_left = front_left * 0.66
-    #     front_right = front_right * 0.66
-    #     back_left = back_left * 0.66
-    #     back_right = back_right * 0.66
+    isXbox = False
 
-    setmotors(front_left, front_right, back_left, back_right)
-    # else:
-    #     #  print("Motors not enabled.")
-    #     setmotors(0, 0, 0, 0)
+    if isXbox == True:
+        # If buffer buttons presed, arms being controlled so return
+        if (data.buttons[4] == 1) or (data.buttons[5] == 1):
+            return
+
+        control_movement = True
+        x, y, z = data.axes[1], data.axes[3], data.axes[0]
+
+    else:
+        control_movement = data.buttons[2] == 1
+        data.axes[0], data.axes[1], data.axes[2]
+
+    if(control_movement == True):
+        # print(data.axes[0], data.axes[1])
+        front_left, front_right, back_left, back_right = steering(x, y, z)
+        # print(front_left, front_right, back_left, back_right)
+
+        # Buttons are on when down so this makes sense in the physical world
+        # if(data.buttons[4] == 1):
+        # Low speed, halve values
+        front_left = front_left * 0.2
+        front_right = front_right * 0.2
+        back_left = back_left * 0.2
+        back_right = back_right * 0.2
+        # else:
+        #     front_left = front_left * 0.66
+        #     front_right = front_right * 0.66
+        #     back_left = back_left * 0.66
+        #     back_right = back_right * 0.66
+
+        setmotors(front_left, front_right, back_left, back_right)
+    else:
+        #  print("Motors not enabled.")
+        setmotors(0, 0, 0, 0)
 
 def setmotors(m0, m1, m2, m3):
     rb.m0 = m0

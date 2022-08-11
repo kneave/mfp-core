@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from re import L
 import rospy
 import redboard
 from rosredboard.msg import Expander
@@ -147,12 +148,15 @@ def joy_callback(data):
             rightControlHand = TriggerButton(data.axes[xboxAxesDict["rt"]])
 
         else:
-            reduction = 25
+            reduction = 15
+            lz = data.axes[axesDict["lz"]]
+            rz = data.axes[axesDict["rz"]]
 
             leftAxisZ = ReduceAxis(lz, reduction)
             rightAxisZ = ReduceAxis(rz, reduction)
 
-            rightControlArm = data.buttons[buttonsDict["ToggleUp"]]
+            leftControlArm = rightControlArm = data.buttons[buttonsDict["ToggleUp"]]
+            leftControlHand = data.buttons[buttonsDict["S1"]]
             rightControlHand = data.buttons[buttonsDict["S2"]]
 
         # We're in left arm control mode, check if arm/hand control needed
@@ -169,7 +173,7 @@ def joy_callback(data):
             if(isXbox == True):            
                 positions.servo15 += rightAxisX
             else:
-                positions.servo15 += rightAxisZ
+                positions.servo15 -= rightAxisZ
 
         SetServos()
 

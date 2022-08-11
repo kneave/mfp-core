@@ -271,6 +271,7 @@ def joy_callback(data):
                     else:
                         positions.servo3 -= leftAxisY
                     positions.servo0 -= leftAxisZ      
+                    positions.servo2 += leftAxisX      
             
             if(leftControlHand == 1):
                 # controlling the wrist/hand      
@@ -287,12 +288,12 @@ def joy_callback(data):
                     positions.servo8  += rightAxisX
                     positions.servo11 += rightAxisY        
                 else:
-                    positions.servo10 += rightAxisX
                     if(rightStickButton == 0):
                         positions.servo9 += rightAxisY 
                     else:
                         positions.servo11 += rightAxisY 
-                        positions.servo8 -= rightAxisZ
+                    positions.servo8 -= rightAxisZ    
+                    positions.servo10 += rightAxisX
 
             if(rightControlHand == 1):
                 # controlling the wrist/hand

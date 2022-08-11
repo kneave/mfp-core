@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 from time import sleep
+import signal
 
 import rospy
 from sensor_msgs.msg import BatteryState
 
 import SDL_Pi_INA3221
+
+def handler(signum, frame):
+    print("ctrl-c pressed, exiting")
+    sys.exit()
 
 ina3221 = None
 def ConnectSensor():
@@ -19,6 +24,8 @@ pub = rospy.Publisher('servo_power', BatteryState, queue_size=10)
 rospy.init_node('servo_power_node', anonymous=True)
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, handler)
+    
     try:
         ConnectSensor()
         # Loop until disconnected

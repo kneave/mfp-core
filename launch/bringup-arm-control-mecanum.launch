@@ -1,0 +1,7 @@
+<launch>
+  <node name="mecanum_motor_node" pkg="mfp-core" type="mecanum_motor_node.py" />
+  <!-- <node name="head_node" pkg="mfp-core" type="head_node.py" /> -->
+  <node name="arm_control" pkg="mfp-core" type="arm_control.py" />
+  #<node name="hand_control" pkg="mfp-core" type="hand_control.py" />
+  #<node name="servo_power_node" pkg="mfp-core" type="ina3221_power_node.py" />
+</launch>

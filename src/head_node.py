@@ -37,7 +37,7 @@ def scaleinput(input, invert, scale):
 
 def callback(data):
 
-    isXbox = True
+    isXbox = False
 
     if isXbox == True:
         control_head = not ((data.buttons[4] == 1) or (data.buttons[5] == 1))

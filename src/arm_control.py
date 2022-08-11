@@ -76,15 +76,18 @@ buttonsDict = {
 
 # stores the current positions of all the servos
 positions = Expander()
+
+# 0.09, 1.00, 0.25, 0.89, -0.26, 0.36, 0.00
+
 positions.servo0  =  0.09
-positions.servo1  = -0.65
+positions.servo1  =  -0.48
 positions.servo2  =  0.12
 positions.servo3  =  0.89
-positions.servo4  = -0.29
-positions.servo5  = -0.21
+positions.servo4  =  0.22
+positions.servo5  = -0.22
 
 positions.servo8  =  0.09
-positions.servo9  =  1.00
+positions.servo9  =  0.95
 positions.servo10 =  0.00
 positions.servo11 = -0.93
 positions.servo12 =  0.50
@@ -181,7 +184,7 @@ def joy_callback(data):
         # print("lerping in progress")
         return
 
-    isXbox = True       #   Are we using an xbox controller?
+    isXbox = False       #   Are we using an xbox controller?
 
     if(data.buttons[buttonsDict["ToggleUp"]] == 1) or (isXbox == True):
         # Arm control engaged
@@ -266,20 +269,14 @@ def joy_callback(data):
                     if(leftStickButton == 0):
                         positions.servo1 -= leftAxisY 
                     else:
-                        positions.servo3 -= leftAxisX 
+                        positions.servo3 -= leftAxisY
                     positions.servo0 -= leftAxisZ      
             
             if(leftControlHand == 1):
                 # controlling the wrist/hand      
                 handrotate = leftAxisX * 0.5
-
                 positions.servo4 += (-leftAxisY + handrotate) 
                 positions.servo5 += (leftAxisY + handrotate)
-
-                if(isXbox == True):
-                    positions.servo7 += rightAxisX
-                else:
-                    positions.servo7 += leftAxisZ
 
         # We're in right arm control mode, check if arm/hand control needed
         if(rightControlArm == 1):
@@ -304,12 +301,10 @@ def joy_callback(data):
                     handrotate = leftAxisX * 0.5
                     positions.servo12 += (-leftAxisY + handrotate) 
                     positions.servo13 += (leftAxisY + handrotate)            
-                    positions.servo15 += rightAxisX
                 else:
                     handrotate = rightAxisX * 0.5
                     positions.servo12 += (-rightAxisY + handrotate) 
                     positions.servo13 += (rightAxisY + handrotate)            
-                    positions.servo15 += rightAxisZ
 
         SetServos()
 
@@ -331,23 +326,21 @@ def MapAxis(input):
 
 # Print the values of all positions to 3 decimal points
 def PrintPositions():
-    global pospub, positions
+    global pospub, rbex
     
     msg = Expander()   
-    msg.servo0 = positions.servo0
-    msg.servo1 = positions.servo1
-    msg.servo2 = positions.servo2
-    msg.servo3 = positions.servo3
-    msg.servo4 = positions.servo4
-    msg.servo5 = positions.servo5
-    msg.servo7 = positions.servo7
-    msg.servo8 = positions.servo8
-    msg.servo9 = positions.servo9
-    msg.servo10 = positions.servo10
-    msg.servo11 = positions.servo11
-    msg.servo12 = positions.servo12
-    msg.servo13 = positions.servo13
-    msg.servo15 = positions.servo15
+    msg.servo0 = rbex.servo0
+    msg.servo1 = rbex.servo1
+    msg.servo2 = rbex.servo2
+    msg.servo3 = rbex.servo3
+    msg.servo4 = rbex.servo4
+    msg.servo5 = rbex.servo5
+    msg.servo8 = rbex.servo8
+    msg.servo9 = rbex.servo9
+    msg.servo10 = rbex.servo10
+    msg.servo11 = rbex.servo11
+    msg.servo12 = rbex.servo12
+    msg.servo13 = rbex.servo13
     
     pospub.publish(msg)
     # rospy.loginfo(msg)

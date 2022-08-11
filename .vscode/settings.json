@@ -1,4 +1,9 @@
 {
     "python.pythonPath": "/bin/python3",
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "python.autoComplete.extraPaths": [
+        "/home/keegan/catkin_ws/devel/lib/python3/dist-packages",
+        "/home/keegan/ros_catkin_ws/devel_isolated/xacro/lib/python3/dist-packages",
+        "/home/keegan/ros_catkin_ws/install_isolated/lib/python3/dist-packages"
+    ]
 }

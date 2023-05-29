@@ -12,18 +12,18 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  rosredboard
+  ros_redboard
 )
 
 generate_messages(
   DEPENDENCIES
   sensor_msgs
-  rosredboard
+  ros_redboard
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs rosredboard
-  DEPENDS rosredboard
+  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs ros_redboard
+  DEPENDS ros_redboard
 )
 
 include_directories(
